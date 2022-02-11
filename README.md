@@ -16,5 +16,5 @@ pip install -r /path/to/requirements.txt
 
 Database is built on SQLite using SQLAlchemy v.1.4.31.
 
-Database can be setup and populated by running the file populate_database.py
+Database can be setup and populated by running the file app.py
 
