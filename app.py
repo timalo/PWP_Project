@@ -31,7 +31,7 @@ class Card(db.Model):
 class Game(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
-    deck_id = db.relationship("Deck", back_populates="game")
+    deck_id = db.relationship("Deck", back_populates="game", uselist=False)
     player_id = db.relationship("Player", back_populates="game")
 
 class Player(db.Model):
@@ -49,9 +49,12 @@ def main():
     game1 = Game()
     db.session.add(game1)
     deck1 = Deck(game=game1)
-    deck2 = Deck(game=game1)
     db.session.add(deck1)
+    db.session.commit()
+
+    deck2 = Deck(game=game1)
     db.session.add(deck2)
+    db.session.commit()
     print(Deck.query.all())
     card1 = Card(value="2D", deck=deck1)
     card2 = Card(value="Mee töihin!", deck=deck2)
@@ -62,7 +65,9 @@ def main():
     print(Card.query.all())
     
     player1 = Player(game=game1)
+    player2 = Player(game=game1)
     db.session.add(player1)
+    db.session.add(player2)
     card1.player = player1
 
     for card in Card.query.all():
@@ -71,6 +76,10 @@ def main():
     card2.player = player1
     for card in Card.query.all():
         print(f"Card: {card.id}, Value: {card.value}, Deck ID: {card.deck_id}, Deck: {card.deck}, Player: {card.player}")
+
+    print()
+    for game in Game.query.all():
+        print(f"Game: {game}, Game_id: {game.id}, Game deck: {game.deck_id}, Game players: {game.player_id}")
     db.session.commit()
 
 #Product.query.filter_by(handle=product).first()
