@@ -64,9 +64,13 @@ class Deck(db.Model):
     game = db.relationship("Game", back_populates="deck_id")
 
     def serialize(self):
+        card_list = []
+        for i in self.cards:
+            card_list.append((i.value, i.order_id, i.is_still_in_deck))
         return {
             "id": self.id,
-            "game_id": self.game_id
+            "game_id": self.game_id,
+            "cards": card_list
         }
 
 class Card(db.Model):
