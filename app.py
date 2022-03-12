@@ -41,41 +41,6 @@ playergamepairs = db.Table("playergamepairs",
     db.Column("game_id", db.Integer, db.ForeignKey("game.id"), primary_key=True)
 )
 
-class Deck(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128), nullable=False)
-    cards = db.relationship("Card", back_populates="deck")
-
-    game_id = db.Column(db.Integer, db.ForeignKey("game.id", ondelete="CASCADE"))
-
-    cards = db.relationship("Card", cascade="all", back_populates="deck")
-    game = db.relationship("Game", back_populates="deck_id")
-
-
-class Card(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    value = db.Column(db.String(12), nullable=False)
-    is_still_in_deck = db.Column(db.Boolean(), nullable=False)
-    deck_id = db.Column(db.Integer, db.ForeignKey("deck.id"), nullable=False)
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
-
-
-    deck = db.relationship("Deck", back_populates="cards")
-    
-    player = db.relationship("Player", back_populates="cards")
-    
-
-    def serialize(self):
-        return {
-            "deck_id": self.deck_id,
-            "value": self.value
-        }
-
-class Playergamepair(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    games = db.relationship("Game", secondary=playergamepairs, back_populates="playergamepairs")
-
-
 class Game(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     game_name = db.Column(db.String(128), nullable=False) 
@@ -90,6 +55,44 @@ class Game(db.Model):
             "game_name": self.game_name
         }
         return doc
+class Deck(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    cards = db.relationship("Card", back_populates="deck")
+
+    game_id = db.Column(db.Integer, db.ForeignKey("game.id", ondelete="CASCADE"))
+
+    cards = db.relationship("Card", cascade="all", back_populates="deck")
+    game = db.relationship("Game", back_populates="deck_id")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "game_id": self.game_id
+        }
+
+class Card(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    value = db.Column(db.String(12), nullable=False)
+    is_still_in_deck = db.Column(db.Boolean(), nullable=False)
+    deck_id = db.Column(db.Integer, db.ForeignKey("deck.id"), nullable=False)
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
+
+    deck = db.relationship("Deck", back_populates="cards")
+    
+    player = db.relationship("Player", back_populates="cards")
+    
+    def serialize(self):
+        return {
+            "deck_id": self.deck_id,
+            "value": self.value
+        }
+
+class Playergamepair(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    games = db.relationship("Game", secondary=playergamepairs, back_populates="playergamepairs")
+
+
+
 class Player(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     game_id = db.Column(db.Integer, db.ForeignKey("game.id", ondelete="SET NULL"))
@@ -98,11 +101,8 @@ class Player(db.Model):
     cards = db.relationship("Card", back_populates="player")
 
 class DeckItem(Resource):
-    def get(self):
-        pass
-
-    def post(self):
-        pass
+    def get(self, game, deck):
+        return deck.serialize()
     
 class CardItem(Resource):
     def get(self, card):
@@ -113,7 +113,7 @@ class CardCollection(Resource):
     def get(self):
         return Response(headers={"content": "none"}, status=400)
     
-    def post(self, deck):
+    def post(deck):
         if not request.content_type.startswith('application/json'):
             return Response(headers={"msg": "Unsupported media type. Only JSON accepted"}, status=415)
         try:
@@ -132,26 +132,31 @@ class CardCollection(Resource):
             print("something borke")
 
 class DeckCollection(Resource):
-    def get(self):
+    def get(self, game):
+        print("printing game")
+        print(game)
         deck_list = []
         for i in range(len(Deck.query.all())):
             deck = {
-                "id": Deck.query.get(i+1).id
+                "id": Deck.query.get(i+1).id,
+                "game_id": Deck.query.get(i+1).game_id
             }
             deck_list.append(deck)
         return deck_list
 
-    def post(deck):
-        if not request.json:
-            return Response("not json", status=415)
+    def post(deck, game):
         try:
+            print("trying to create new deck...")
+            if (game.deck_id != None):
+                return "Game already has a deck. Don't create a new one :(", 400
             newDeck = Deck(
-                name = request.json["name"]
+                game_id = game.id
             )
             db.session.add(newDeck)
             db.session.commit()
-            deck_url = api.url_for(DeckItem, deck=deck)
-            print(deck_url)
+            print("deck in DB")
+            deck_url = api.url_for(DeckItem, deck=newDeck, game=game)
+            print("deck url is: " + deck_url)
             
             return Response(headers={'Location': deck_url}, status=201)
         except KeyError:
@@ -164,7 +169,6 @@ class DeckCollection(Resource):
 class GameItem(Resource):
     def get(self, game):
         return game.serialize()
-
 
 class GameCollection(Resource):
     def get(self):
@@ -194,9 +198,7 @@ class GameCollection(Resource):
             return "Something wrong with adding the game to the database.", 400
 
 class DeckConverter(BaseConverter):
-
     #Converter for getting the url for a deck from database object
-
     def to_python(self, id):
         db_deck = Deck.query.filter_by(id=id).first()
         if db_deck is None:
@@ -204,7 +206,7 @@ class DeckConverter(BaseConverter):
         return db_deck
     
     def to_url(self, db_deck):
-        return db_deck.id
+        return str(db_deck.id)
 
 class CardConverter(BaseConverter):
     def to_python(self, id):
@@ -224,8 +226,13 @@ class GameConverter(BaseConverter):
         return db_game
 
     def to_url(self, db_game):
-        print(db_game)
         return str(db_game.id)
+
+class CardHandler(Resource):
+    def get():
+        pass
+    def post():
+        pass
 
 app.url_map.converters["deck"] = DeckConverter
 app.url_map.converters["card"] = CardConverter
@@ -234,16 +241,17 @@ app.url_map.converters["game"] = GameConverter
 api.add_resource(GameCollection, "/api/games/")
 api.add_resource(GameItem, "/api/games/<game:game>/")
 
-api.add_resource(DeckCollection, "/api/decks/")
+api.add_resource(DeckCollection, "/api/games/<game:game>/decks/")
+api.add_resource(DeckItem, "/api/games/<game:game>/decks/<deck:deck>/")
 
-api.add_resource(DeckItem, "/api/decks/<deck:deck>/")
+#api.add_resource(CardHandler, "/api/games/<game:game>/<deck:deck>/<card:card>/")
 
 api.add_resource(CardCollection, "/api/decks/<deck:deck>/cards/")
 
 api.add_resource(CardItem, "/api/decks/<deck:deck>/cards/<card:card>/")
 
-try:
+""" try:
     os.remove("test.db")
 except Exception as e:
     print(e)
-db.create_all()
+db.create_all() """
