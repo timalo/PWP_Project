@@ -31,10 +31,10 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.close()
 
-CARDS = ['AS', '2S', '3S', '4S', '5S', '6S', '7S', '8S', '9S', '0S', 'JS', 'QS', 'KS',
-         'AD', '2D', '3D', '4D', '5D', '6D', '7D', '8D', '9D', '0D', 'JD', 'QD', 'KD',
-         'AC', '2C', '3C', '4C', '5C', '6C', '7C', '8C', '9C', '0C', 'JC', 'QC', 'KC',
-         'AH', '2H', '3H', '4H', '5H', '6H', '7H', '8H', '9H', '0H', 'JH', 'QH', 'KH']
+CARDS = ['AS', '2S', '3S', '4S', '5S', '6S', '7S', '8S', '9S', 'TS', 'JS', 'QS', 'KS',
+         'AD', '2D', '3D', '4D', '5D', '6D', '7D', '8D', '9D', 'TD', 'JD', 'QD', 'KD',
+         'AC', '2C', '3C', '4C', '5C', '6C', '7C', '8C', '9C', 'TC', 'JC', 'QC', 'KC',
+         'AH', '2H', '3H', '4H', '5H', '6H', '7H', '8H', '9H', 'TH', 'JH', 'QH', 'KH']
 
 playergamepairs = db.Table("playergamepairs",
     db.Column("playergamepair_id", db.Integer, db.ForeignKey("playergamepair.id"), primary_key=True),
@@ -57,9 +57,8 @@ class Game(db.Model):
         return doc
 class Deck(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    cards = db.relationship("Card", back_populates="deck")
-
     game_id = db.Column(db.Integer, db.ForeignKey("game.id", ondelete="CASCADE"))
+
 
     cards = db.relationship("Card", cascade="all", back_populates="deck")
     game = db.relationship("Game", back_populates="deck_id")
@@ -73,7 +72,8 @@ class Deck(db.Model):
 class Card(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     value = db.Column(db.String(12), nullable=False)
-    is_still_in_deck = db.Column(db.Boolean(), nullable=False)
+    is_still_in_deck = db.Column(db.Boolean, nullable=False)
+    order_id = db.Column(db.Integer, nullable=False)
     deck_id = db.Column(db.Integer, db.ForeignKey("deck.id"), nullable=False)
     player_id = db.Column(db.Integer, db.ForeignKey("player.id"))
 
@@ -105,27 +105,31 @@ class DeckItem(Resource):
         return deck.serialize()
     
 class CardItem(Resource):
-    def get(self, card):
-        #returns the value of the card.
-        return card.serialize()
+    def get(self, card, deck):
+        print(deck)
+        return deck.cards[card.id].serialize()
 
 class CardCollection(Resource):
-    def get(self):
+    def get(self, deck):
         return Response(headers={"content": "none"}, status=400)
     
-    def post(deck):
-        if not request.content_type.startswith('application/json'):
-            return Response(headers={"msg": "Unsupported media type. Only JSON accepted"}, status=415)
+    def post(card, deck):
         try:
-            for i in CARDS:
+            for i, j in enumerate(CARDS):
                 new_card = Card(
-                    value = i,
+                    value = j,
                     is_still_in_deck = True,
-                    deck = deck
+                    deck_id = deck.id,
+                    order_id = i
                 )
                 print("adding new card with value: " + new_card.value)
                 db.session.add(new_card)
                 db.session.commit()
+
+                card_url = api.url_for(CardItem, deck=deck, card=new_card)
+                print("new card url is: " + card_url)
+            
+            return "cards created :)", 201
 
         except IntegrityError:
             db.session.rollback()
@@ -216,7 +220,7 @@ class CardConverter(BaseConverter):
         return db_card
 
     def to_url(self, db_card):
-        return db_card.id 
+        return str(db_card.order_id)
 
 class GameConverter(BaseConverter):
     def to_python(self, id):
@@ -247,7 +251,6 @@ api.add_resource(DeckItem, "/api/games/<game:game>/decks/<deck:deck>/")
 #api.add_resource(CardHandler, "/api/games/<game:game>/<deck:deck>/<card:card>/")
 
 api.add_resource(CardCollection, "/api/decks/<deck:deck>/cards/")
-
 api.add_resource(CardItem, "/api/decks/<deck:deck>/cards/<card:card>/")
 
 """ try:
