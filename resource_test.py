@@ -46,14 +46,18 @@ def _populate_db():
     game1 = Game(game_name="testGame1")
     game2 = Game(game_name="testGame2")
     game3 = Game(game_name="testGame3")
+    game4 = Game(game_name="testGame4")
 
     db.session.add(game1)
     db.session.add(game2)
     db.session.add(game3)
+    db.session.add(game4)
     
     deck1 = Deck(game=game1)
     db.session.add(deck1)
     deck2 = Deck(game=game2)
+    deck4 = Deck(game=game4)
+    db.session.add(deck4)
     db.session.add(deck2)
     db.session.commit()
 
@@ -95,6 +99,12 @@ def _get_deck_json():
 
     return {"": ""}
 
+def _get_card_json():
+    """
+    Creates an empty json object to be used for card tests.
+    """
+    return {"": ""}
+
 class TestGameCollection(object):
     """
     This class implements tests for each HTTP method in game collection
@@ -115,7 +125,9 @@ class TestGameCollection(object):
         assert resp.status_code == 200
         body = json.loads(resp.data)
 
-        assert body == "get works"
+        assert len(body) == 4
+        assert body[0]["game_name"] == "testGame1"
+        assert body[0]["id"] == 1
 
         """
         assert len(body["items"]) == 3
@@ -143,11 +155,11 @@ class TestGameCollection(object):
         # test with valid and see that it exists afterward
         resp = client.post(self.RESOURCE_URL, json=valid)
         assert resp.status_code == 201
-        assert resp.headers["Location"].endswith(self.RESOURCE_URL + "4" + "/")
+        assert resp.headers["Location"].endswith(self.RESOURCE_URL + "5" + "/")
         resp = client.get(resp.headers["Location"])
         assert resp.status_code == 200
         body = json.loads(resp.data)
-        assert body["id"] == 4
+        assert body["id"] == 5
         assert body["game_name"] == "extra-game-1"
         
         # send same data again for 201
@@ -244,7 +256,7 @@ class TestDeckCollection(object):
     """
     RESOURCE_URL = "/api/games/3/decks/"
     WRONG_URL = "/api/games/3/deckss/"
-    WRONG_URL2 = "/api/games/4/decks/"
+    WRONG_URL2 = "/api/games/5/decks/"
 
     def test_post(self, client):
         """
@@ -267,7 +279,7 @@ class TestDeckCollection(object):
         
         resp = client.post(self.RESOURCE_URL, json=valid)
         assert resp.status_code == 201
-        assert resp.headers["Location"].endswith(self.RESOURCE_URL + "3" + "/")
+        assert resp.headers["Location"].endswith(self.RESOURCE_URL + "4" + "/")
         resp = client.get(resp.headers["Location"])
         assert resp.status_code == 200
 
@@ -284,7 +296,7 @@ class TestDeckCollection(object):
         assert resp.status_code == 200
         body = json.loads(resp.data)
 
-        assert body[2]["game_id"] == 3
+        assert body[2]["game_id"] == 4
         assert body[2]["id"] == 3
 
     def test_put(self, client):
@@ -366,5 +378,169 @@ class TestDeckItem(object):
         assert resp.status_code == 405
 
 
+class TestCardCollection(object):
+    """
+    This class implements tests for each HTTP method in card collection
+    resource. 
+    """
+
+    RESOURCE_URL = "/api/decks/3/cards/"
+    WRONG_URL = "/api/decks/3/card/"
+    WRONG_URL2 = "/api/decks/3/cardss/"
+
+    def test_post(self, client):
+        """
+        Tests the POST method. Checks all of the possible error codes, and 
+        also checks that a valid request receives a 201 response with a 
+        location header that leads into the newly created resource.
+        """
+
+        valid = _get_card_json()
+
+        #test with url that has typo
+        resp = client.post(self.WRONG_URL, json=valid)
+        assert resp.status_code == 404
+
+        #test with a game that doesn't exist
+        resp = client.post(self.WRONG_URL2, json=valid)
+        assert resp.status_code == 404
 
 
+        resp = client.post(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 201
+
+
+        #assert resp.headers["Location"].endswith(self.RESOURCE_URL + "3" + "/")
+
+        #resp = client.get(resp.headers["Location"])
+        #assert resp.status_code == 200
+
+    def test_get(self, client):
+        """
+        GET is not implemented, should return 405
+        """
+
+        resp = client.get(self.RESOURCE_URL)
+        assert resp.status_code == 400
+
+    def test_put(self, client):
+        """
+        PUT is not implemented, should return 405
+        """
+        valid = _get_card_json()
+        resp = client.put(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 405
+
+    def test_delete(self, client):
+        """
+        DELETE is not implemented, should return 405
+        """
+        resp = client.delete(self.RESOURCE_URL)
+        assert resp.status_code == 405
+
+
+class TestCardItem(object):
+    """
+    This class implements tests for each HTTP method in card item resouce
+    """
+    RESOURCE_URL = "/api/decks/1/cards/1/"
+    WRONG_URL = "/api/decks/1/card/1/"
+    WRONG_URL2 = "/api/decks/1/cardss/1/"
+
+    def test_get(self, client):
+        """
+        Tests the GET method. Checks that the response status code is 200, and
+        then checks that all of the expected attributes and controls are
+        present, and the controls work. Also checks that all of the items from
+        the DB popluation are present, and their controls.
+        """
+
+        resp = client.get(self.RESOURCE_URL)
+        assert resp.status_code == 200
+
+        body = json.loads(resp.data)
+
+        assert body["deck_id"] == 1
+        assert body["value"] == "2S"
+        assert body["is_still_in_deck"] == True
+
+
+        resp = client.get(self.WRONG_URL)
+        assert resp.status_code == 404
+
+    def test_post(self, client):
+        """
+        POST is not implemented, should return 405
+        """
+
+        resp = client.post(self.RESOURCE_URL, json="")
+        assert resp.status_code == 405
+
+    def test_delete(self, client):
+        """
+        tests the DELETE method. 
+        """
+        resp = client.delete(self.RESOURCE_URL)
+        assert resp.status_code == 405
+
+    def test_put(self, client):
+        """
+        PUT is not implemented, should return 405
+        """
+
+        resp = client.put(self.RESOURCE_URL, json="")
+        assert resp.status_code == 405
+
+class TestCardHandler(object):
+    """
+    This class implements test for each HTTP method in card handler resource
+    """
+
+    RESOURCE_URL = "/api/decks/1/cards/1/handler/"
+    def test_post(self, client):
+        """
+        POST not implemented, returns 405
+        """
+        resp = client.post(self.RESOURCE_URL, json="")
+        assert resp.status_code == 405
+
+    def test_get(self, client):
+        """
+        GET not implemented, returns 405
+        """
+        resp = client.get(self.RESOURCE_URL)
+        assert resp.status_code == 405
+
+    def test_delete(self, client):
+        """
+        DELETE not implemented, return 405
+        """
+        resp = client.delete(self.RESOURCE_URL)
+        assert resp.status_code == 405
+
+    def test_put(self, client):
+        """
+        tests PUT method which should toggle "drawn" status for a single card
+        """
+
+        #1. check that the boolean "is_still_in_deck" is false
+        resp = client.get("/api/decks/1/cards/1/")
+        assert resp.status_code == 200
+        body = json.loads(resp.data)
+        assert body["is_still_in_deck"] == True
+
+        #2. toggle the value and check that the boolean is now false
+        resp = client.put(self.RESOURCE_URL, json="")
+        assert resp.status_code == 200
+        resp = client.get("/api/decks/1/cards/1/")
+        assert resp.status_code == 200
+        body = json.loads(resp.data)
+        assert body["is_still_in_deck"] == False
+
+        #3. toggle it again and check that it changes back to true
+        resp = client.put(self.RESOURCE_URL, json="")
+        assert resp.status_code == 200
+        resp = client.get("/api/decks/1/cards/1/")
+        assert resp.status_code == 200
+        body = json.loads(resp.data)
+        assert body["is_still_in_deck"] == True
