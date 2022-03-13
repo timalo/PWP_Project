@@ -222,7 +222,6 @@ class GameCollection(Resource):
     POST function takes in the game name as a json object.
     Get function return a list of games
     """
-#----------------------------------------------------
     def get(self):
         game_list = []
         for i in range(len(Game.query.all())):
@@ -232,7 +231,7 @@ class GameCollection(Resource):
             }
             game_list.append(game)
         return game_list
-#------------------------------------------------------
+
     def post(game):
         if not request.json:
             return Response("not json", status=415)
