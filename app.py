@@ -261,10 +261,6 @@ class CardHandler(Resource):
     CardHandler resource that is responsible for performing actions on the deck.
     Put function picks a given card from the deck and marks it as drawn/discarded
     """
-    def get():
-        pass
-    def post():
-        pass
     def put(self, deck, card):
         deck.cards[card.id].is_still_in_deck = False
         db.session.commit()
