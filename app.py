@@ -103,12 +103,16 @@ class Player(db.Model):
     cards = db.relationship("Card", back_populates="player")
 
 class DeckItem(Resource):
+    """
+    DeckItem resource that resembles a single deck. 
+    Get function returns information of the deck. The values are id, game_id, and card_list
+    Delete function removes the deck. 
+    """
     def get(self, game, deck):
         return deck.serialize()
 
     def delete(self, deck, game):
         try:
-            #print("deleting deck: " + deck.id)
             db.session.delete(deck)
             db.session.commit()
             return "Deck removed.", 200
@@ -116,13 +120,24 @@ class DeckItem(Resource):
             print(e)
     
 class CardItem(Resource):
+    """
+    resource for a singular card item. Get function returns the deck_id and card value.
+    Input values card and deck are given in the URL "/api/decks/<deck_id>/cards/<order_id>" 
+    where order_id is an integer resembling the position of the card in the deck.
+    """
     def get(self, card, deck):
         print(deck)
         return deck.cards[card.id].serialize()
 
 class CardCollection(Resource):
+    """
+    Resource for handling the creation of the cards in the deck.
+    Only allows post function, which creates all the cards in the given deck.
+    Does not return location for the URLs of the individual cards.
+    Cards are created in URLs "/api/decks/<deck_Id>/cards/order_id/" where order_id is an integer from 1-52
+    """
     def get(self, deck):
-        return Response(headers={"content": "none"}, status=400)
+       return Response("only post request allowed", status=400)
     
     def post(card, deck):
         try:
@@ -133,12 +148,10 @@ class CardCollection(Resource):
                     deck_id = deck.id,
                     order_id = i
                 )
-                print("adding new card with value: " + new_card.value)
                 db.session.add(new_card)
                 db.session.commit()
 
                 card_url = api.url_for(CardItem, deck=deck, card=new_card)
-                print("new card url is: " + card_url)
             
             return "cards created :)", 201
 
@@ -147,6 +160,11 @@ class CardCollection(Resource):
             print("something borke")
 
 class DeckCollection(Resource):
+    """
+    Resource for handling decks.
+    Get function returns a list of all decks in every game.
+    Post request creates a new deck in the given game. The deck is initially empty and needs to be filled with cards.
+    """
     def get(self, game):
         print("printing game")
         print(game)
@@ -182,6 +200,10 @@ class DeckCollection(Resource):
             return "Something wrong with adding the deck to the database.", 400
 
 class GameItem(Resource):
+    """
+    A resource holding a single game item. Only has functions for getting the game info, and for deleting a single game.
+    Inputs are given through the resource URL
+    """
     def get(self, game):
         return game.serialize()
 
@@ -195,8 +217,14 @@ class GameItem(Resource):
             print(e)
 
 class GameCollection(Resource):
+    """
+    Resource that takes in new games in the post function. New games are created from the URL "/api/games/" 
+    POST function takes in the game name as a json object.
+    Get function return a list of games
+    """
     def get(self):
         return "get works", 200
+        #TODO return list of games.
 
     def post(game):
         if not request.json:
@@ -223,6 +251,10 @@ class GameCollection(Resource):
 
     
 class CardHandler(Resource):
+    """
+    CardHandler resource that is responsible for performing actions on the deck.
+    Put function picks a given card from the deck and marks it as drawn/discarded
+    """
     def get():
         pass
     def post():
@@ -231,6 +263,8 @@ class CardHandler(Resource):
         deck.cards[card.id].is_still_in_deck = False
         db.session.commit()
 
+
+#Converters
 class DeckConverter(BaseConverter):
     #Converter for getting the url for a deck from database object
     def to_python(self, id):
@@ -276,10 +310,3 @@ app.url_map.converters["card"] = CardConverter
 api.add_resource(CardHandler, "/api/decks/<deck:deck>/cards/<card:card>/handler/")
 api.add_resource(CardCollection, "/api/decks/<deck:deck>/cards/")
 api.add_resource(CardItem, "/api/decks/<deck:deck>/cards/<card:card>/")
-
-
-""" try:
-    os.remove("test.db")
-except Exception as e:
-    print(e)
-db.create_all() """
