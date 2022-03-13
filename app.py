@@ -106,6 +106,15 @@ class Player(db.Model):
 class DeckItem(Resource):
     def get(self, game, deck):
         return deck.serialize()
+
+    def delete(self, deck, game):
+        try:
+            #print("deleting deck: " + deck.id)
+            db.session.delete(deck)
+            db.session.commit()
+            return "Deck removed.", 200
+        except Exception as e:
+            print(e)
     
 class CardItem(Resource):
     def get(self, card, deck):
