@@ -223,10 +223,26 @@ class GameCollection(Resource):
             return "Something wrong with adding the game to the database.", 400
 
     
-
 class PlayerCollection(Resource):
     def get(self):
         pass
+
+    def post():
+        if not request.json:
+            return Response("not json", status=415)
+        try:
+            new_player = Player(
+                name = request.json["name"]
+            )
+            db.session.add(new_player)
+            db.session.commit()
+            player_url = api.url_for(PlayerItem, )
+        except KeyError:
+            return "something borke", 400
+        except ValidationError as e:
+            raise BadRequest(description=str(e))
+        except IntegrityError:
+            return "Something wrong with adding the player to the database.", 400
 
     def post():
         pass
