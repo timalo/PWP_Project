@@ -87,7 +87,8 @@ class Card(db.Model):
     def serialize(self):
         return {
             "deck_id": self.deck_id,
-            "value": self.value
+            "value": self.value,
+            "is_still_in_deck": self.is_still_in_deck
         }
 
 class Playergamepair(db.Model):
