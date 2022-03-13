@@ -21,7 +21,7 @@ Database is built on SQLite using SQLAlchemy v.1.4.31.
 Database can be setup and populated with a few sample games, decks and players by running the db_populate.py (python3 db_populate.py)
 
 ## Testing
-Tests are in a single file: "resource_test.py"
+Tests are located in a single file: "resource_test.py"
 
 Tests and coverage report can be run with the command: "pytest --cov-report term-missing --cov=app"
 
