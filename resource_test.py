@@ -142,3 +142,14 @@ class TestGameCollection(object):
         resp = client.post(self.RESOURCE_URL, json=valid)
         assert resp.status_code == 415
 
+    def test_put(self, client):
+        """
+        PUT method is not supported so it should result to 405
+        """
+        valid = _get_game_json()
+        resp = client.put(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 405
+
+    def test_delete(self, client):
+
+        
