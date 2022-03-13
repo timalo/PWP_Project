@@ -96,7 +96,6 @@ class Playergamepair(db.Model):
     games = db.relationship("Game", secondary=playergamepairs, back_populates="playergamepairs")
 
 
-
 class Player(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     game_id = db.Column(db.Integer, db.ForeignKey("game.id", ondelete="SET NULL"))
@@ -205,6 +204,15 @@ class GameCollection(Resource):
         except IntegrityError:
             return "Something wrong with adding the game to the database.", 400
 
+class PlayerCollection(Resource):
+    def get(self):
+        pass
+
+    def post():
+        pass
+class PlayerItem(Resource):
+    def post():
+        pass
 class CardHandler(Resource):
     def get():
         pass
@@ -213,6 +221,7 @@ class CardHandler(Resource):
     def put(self, deck, card):
         deck.cards[card.id].is_still_in_deck = False
         db.session.commit()
+
 class DeckConverter(BaseConverter):
     #Converter for getting the url for a deck from database object
     def to_python(self, id):
@@ -244,21 +253,33 @@ class GameConverter(BaseConverter):
     def to_url(self, db_game):
         return str(db_game.id)
 
+class PlayerConverter(BaseConverter):
+    def to_python(self, id):
+        db_player = Game.query.filter_by(id=id).first()
+        if db_player is None:
+            raise NotFound
+        return db_player
 
-app.url_map.converters["deck"] = DeckConverter
-app.url_map.converters["card"] = CardConverter
+    def to_url(self, db_player):
+        return str(db_player.id)
+
+
 app.url_map.converters["game"] = GameConverter
-
 api.add_resource(GameCollection, "/api/games/")
 api.add_resource(GameItem, "/api/games/<game:game>/")
 
+app.url_map.converters["deck"] = DeckConverter
 api.add_resource(DeckCollection, "/api/games/<game:game>/decks/")
 api.add_resource(DeckItem, "/api/games/<game:game>/decks/<deck:deck>/")
 
+app.url_map.converters["card"] = CardConverter
 api.add_resource(CardHandler, "/api/decks/<deck:deck>/cards/<card:card>/handler/")
-
 api.add_resource(CardCollection, "/api/decks/<deck:deck>/cards/")
 api.add_resource(CardItem, "/api/decks/<deck:deck>/cards/<card:card>/")
+
+app.url_map.converters["player"] = PlayerConverter
+api.add_resource(PlayerCollection, "/api/players/")
+api.add_resource(PlayerItem, "/api/players/<player:player>/")
 
 """ try:
     os.remove("test.db")
