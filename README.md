@@ -22,5 +22,6 @@ Database can be setup and populated with a few sample games, decks and players b
 
 ## Testing
 Tests are in a single file: "resource_test.py"
+
 Tests and coverage report can be run with the command: "pytest --cov-report term-missing --cov=app"
 
