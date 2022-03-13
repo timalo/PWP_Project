@@ -92,6 +92,12 @@ def _get_game_json(number=1):
     
     return {"game_name": "extra-game-{}".format(number)}
 
+def _get_wrong_game_json(number=1):
+    """
+    Creates a JSON object that has incorrect data
+    """
+    return {"game:": "extra-game-{}".format(number)}
+
 def _get_deck_json():
     """
     Creates an empty json object to be used for deck POST tests.
@@ -143,6 +149,7 @@ class TestGameCollection(object):
         """
         
         valid = _get_game_json()
+        not_valid = _get_wrong_game_json()
         
         # test with wrong content type
         resp = client.post(self.RESOURCE_URL, data=json.dumps(valid))
@@ -151,6 +158,9 @@ class TestGameCollection(object):
         #test with wrong path
         resp = client.post(self.WRONG_URL, json=valid)
         assert resp.status_code == 404
+
+        resp = client.post(self.RESOURCE_URL, json=not_valid)
+        assert resp.status_code == 400
 
         # test with valid and see that it exists afterward
         resp = client.post(self.RESOURCE_URL, json=valid)
