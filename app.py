@@ -263,7 +263,7 @@ class CardHandler(Resource):
     Put function picks a given card from the deck and marks it as drawn/discarded
     """
     def put(self, deck, card):
-        deck.cards[card.id].is_still_in_deck = False
+        deck.cards[card.id].is_still_in_deck = not deck.cards[card.id].is_still_in_deck
         db.session.commit()
 
 
