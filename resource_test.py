@@ -211,6 +211,9 @@ class TestGameItem(object):
         assert resp.status_code == 405
 
     def test_delete(self, client):
+        """
+        tests the DELETE method. 
+        """
         #1. check that game exists
         resp = client.get(self.RESOURCE_URL)
         assert resp.status_code == 200
@@ -305,7 +308,63 @@ class TestDeckItem(object):
     resource. 
     """
     RESOURCE_URL = "/api/games/2/decks/1/"
+    WRONG_URL = "/api/games/2/deck/1/"
 
     def test_get(self, client):
+        """
+        Tests the GET method. Checks that the response status code is 200, and
+        then checks that all of the expected attributes and controls are
+        present, and the controls work. Also checks that all of the items from
+        the DB popluation are present, and their controls.
+        """
+
         resp = client.get(self.RESOURCE_URL)
         assert resp.status_code == 200
+
+        body = json.loads(resp.data)
+
+        assert body["id"] == 1
+        assert body["game_id"] == 1
+
+        assert len(body["cards"]) == 52
+
+        resp = client.get(self.WRONG_URL)
+        assert resp.status_code == 404
+
+    def test_post(self, client):
+        """
+        POST is not implemented, should return 405
+        """
+
+        resp = client.post(self.RESOURCE_URL, json="")
+        assert resp.status_code == 405
+
+    def test_delete(self, client):
+        """
+        tests the DELETE method. 
+        """
+        #1. check that game exists
+        resp = client.get(self.RESOURCE_URL)
+        assert resp.status_code == 200
+        #2. delete the game
+        resp = client.delete(self.RESOURCE_URL)
+        assert resp.status_code == 200
+        #3. check that the game is deleted
+        resp = client.get(self.RESOURCE_URL)
+        assert resp.status_code == 404
+
+        #delete with wrong URL should return 404
+        resp = client.delete(self.WRONG_URL)
+        assert resp.status_code == 404
+
+    def test_put(self, client):
+        """
+        PUT is not implemented, should return 405
+        """
+
+        resp = client.put(self.RESOURCE_URL, json="")
+        assert resp.status_code == 405
+
+
+
+
