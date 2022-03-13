@@ -224,12 +224,19 @@ class TestGameItem(object):
         #delete with wrong URL
         resp = client.delete(self.WRONG_URL)
         assert resp.status_code == 404
+
+    def test_put(self, client):
+        """
+        PUT is not implemented so 405 is expected
+        """
+        resp = client.put(self.RESOURCE_URL, json=_get_game_json())
+        assert resp.status_code == 405
         
 
 
 class TestDeckCollection(object):
     """
-    This class implements tests for each HTTP method in game collection
+    This class implements tests for each HTTP method in deck collection
     resource. 
     """
     RESOURCE_URL = "/api/games/3/decks/"
@@ -277,3 +284,28 @@ class TestDeckCollection(object):
         assert body[2]["game_id"] == 3
         assert body[2]["id"] == 3
 
+    def test_put(self, client):
+        """
+        PUT is not implemented, should return 405
+        """
+        valid = _get_deck_json()
+        resp = client.put(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 405
+
+    def test_delete(self, client):
+        """
+        DELETE is not implemented, should return 405
+        """
+        resp = client.delete(self.RESOURCE_URL)
+        assert resp.status_code == 405
+
+class TestDeckItem(object):
+    """
+    This class implements tests for each HTTP method in deck item
+    resource. 
+    """
+    RESOURCE_URL = "/api/games/2/decks/1/"
+
+    def test_get(self, client):
+        resp = client.get(self.RESOURCE_URL)
+        assert resp.status_code == 200
