@@ -285,6 +285,8 @@ class TestDeckCollection(object):
         resp = client.post(self.WRONG_URL2, json=valid)
         assert resp.status_code == 404
 
+        
+
 
         
         resp = client.post(self.RESOURCE_URL, json=valid)
@@ -292,6 +294,17 @@ class TestDeckCollection(object):
         assert resp.headers["Location"].endswith(self.RESOURCE_URL + "4" + "/")
         resp = client.get(resp.headers["Location"])
         assert resp.status_code == 200
+
+        #Trying to create a new deck for the same game
+        resp = client.post(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 400
+
+        #invalid JSON will pass since the input is not used anywhere 
+        #but the game already has a deck so 400 is expected
+        resp = client.post(self.RESOURCE_URL, data=json.dumps(valid))
+        assert resp.status_code == 400
+
+
 
     def test_get(self, client):
         """
@@ -331,6 +344,8 @@ class TestDeckItem(object):
     """
     RESOURCE_URL = "/api/games/2/decks/1/"
     WRONG_URL = "/api/games/2/deck/1/"
+    WRONG_URL2 = "/api/games/2/deck/3/"
+
 
     def test_get(self, client):
         """
@@ -379,6 +394,10 @@ class TestDeckItem(object):
         resp = client.delete(self.WRONG_URL)
         assert resp.status_code == 404
 
+        #delete a object that doesn't exist
+        resp = client.delete(self.WRONG_URL2)
+        assert resp.status_code == 404
+
     def test_put(self, client):
         """
         PUT is not implemented, should return 405
@@ -418,6 +437,10 @@ class TestCardCollection(object):
 
         resp = client.post(self.RESOURCE_URL, json=valid)
         assert resp.status_code == 201
+
+        #previous test again, should result to 415 since deck already has cards
+        resp = client.post(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 415
 
 
         #assert resp.headers["Location"].endswith(self.RESOURCE_URL + "3" + "/")

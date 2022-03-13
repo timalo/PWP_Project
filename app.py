@@ -113,12 +113,9 @@ class DeckItem(Resource):
         return deck.serialize()
 
     def delete(self, deck, game):
-        try:
-            db.session.delete(deck)
-            db.session.commit()
-            return "Deck removed.", 200
-        except Exception as e:
-            print(e)
+        db.session.delete(deck)
+        db.session.commit()
+        return "Deck removed.", 200
     
 class CardItem(Resource):
     """
@@ -141,7 +138,8 @@ class CardCollection(Resource):
        return Response("only post request allowed", status=400)
     
     def post(card, deck):
-        try:
+
+        if len(deck.cards) == 0:
             for i, j in enumerate(CARDS):
                 new_card = Card(
                     value = j,
@@ -155,10 +153,9 @@ class CardCollection(Resource):
                 card_url = api.url_for(CardItem, deck=deck, card=new_card)
             
             return "cards created :)", 201
+        else:
+            return Response("Deck already has cards, try deleting the deck first", status=415)
 
-        except IntegrityError:
-            db.session.rollback()
-            print("something borke")
 
 class DeckCollection(Resource):
     """
@@ -179,26 +176,21 @@ class DeckCollection(Resource):
         return deck_list
 
     def post(deck, game):
-        try:
-            print("trying to create new deck...")
-            if (game.deck_id != None):
-                return "Game already has a deck. Don't create a new one :(", 400
-            newDeck = Deck(
-                game_id = game.id
-            )
-            db.session.add(newDeck)
-            db.session.commit()
-            print("deck in DB")
-            deck_url = api.url_for(DeckItem, deck=newDeck, game=game)
-            print("deck url is: " + deck_url)
-            
-            return Response(headers={'Location': deck_url}, status=201)
-        except KeyError:
-            return "something borke", 400
-        except ValidationError as e:
-            raise BadRequest(description=str(e))
-        except IntegrityError:
-            return "Something wrong with adding the deck to the database.", 400
+        print("trying to create new deck...")
+
+        if (game.deck_id != None):
+            return "Game already has a deck. Don't create a new one :(", 400
+        newDeck = Deck(
+            game_id = game.id
+        )
+        db.session.add(newDeck)
+        db.session.commit()
+        print("deck in DB")
+        deck_url = api.url_for(DeckItem, deck=newDeck, game=game)
+        print("deck url is: " + deck_url)
+        
+        return Response(headers={'Location': deck_url}, status=201)
+
 
 class GameItem(Resource):
     """
@@ -209,13 +201,10 @@ class GameItem(Resource):
         return game.serialize()
 
     def delete(self, game):
-        try:
-            print("deleting game: " + game.game_name)
-            db.session.delete(game)
-            db.session.commit()
-            return "Game removed.", 200
-        except Exception as e:
-            print(e)
+        print("deleting game: " + game.game_name)
+        db.session.delete(game)
+        db.session.commit()
+        return "Game removed.", 200
 
 class GameCollection(Resource):
     """
@@ -249,12 +238,12 @@ class GameCollection(Resource):
             print("game url: " + game_url)
             
             return Response(headers={'Location': game_url}, status=201)
-        except KeyError:
+        except (KeyError, ValidationError, IntegrityError):
             return "something borke", 400
-        except ValidationError as e:
-            raise BadRequest(description=str(e))
-        except IntegrityError:
-            return "Something wrong with adding the game to the database.", 400
+        #except ValidationError as e:
+        #    raise BadRequest(description=str(e))
+        #except IntegrityError:
+        #    return "Something wrong with adding the game to the database.", 400
 
     
 class CardHandler(Resource):
