@@ -177,6 +177,15 @@ class GameItem(Resource):
     def get(self, game):
         return game.serialize()
 
+    def delete(self, game):
+        try:
+            print("deleting game: " + game.game_name)
+            db.session.delete(game)
+            db.session.commit()
+            return "Game removed.", 200
+        except Exception as e:
+            print(e)
+
 class GameCollection(Resource):
     def get(self):
         return "get works", 200
@@ -203,6 +212,8 @@ class GameCollection(Resource):
             raise BadRequest(description=str(e))
         except IntegrityError:
             return "Something wrong with adding the game to the database.", 400
+
+    
 
 class PlayerCollection(Resource):
     def get(self):
