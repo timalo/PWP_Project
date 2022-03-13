@@ -2,3 +2,5 @@
 *.pyc
 *.db
 *.db
+*.db
+test.db
