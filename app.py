@@ -110,12 +110,12 @@ class DeckItem(Resource):
     Delete function removes the deck. 
     """
     def get(self, game, deck):
-        return deck.serialize()
+        return Response(str(deck.serialize()), status=200)
 
     def delete(self, deck, game):
         db.session.delete(deck)
         db.session.commit()
-        return "Deck removed.", 200
+        return Response(status=200)
     
 class CardItem(Resource):
     """
@@ -125,7 +125,7 @@ class CardItem(Resource):
     """
     def get(self, card, deck):
         print(deck)
-        return deck.cards[card.id].serialize()
+        return Response(str(deck.cards[card.id].serialize()), status=200)
 
 class CardCollection(Resource):
     """
@@ -135,7 +135,7 @@ class CardCollection(Resource):
     Cards are created in URLs "/api/decks/<deck_Id>/cards/order_id/" where order_id is an integer from 1-52
     """
     def get(self, deck):
-       return Response("only post request allowed", status=400)
+       return Response("Only POST request allowed", status=400)
     
     def post(card, deck):
 
@@ -152,9 +152,9 @@ class CardCollection(Resource):
 
                 card_url = api.url_for(CardItem, deck=deck, card=new_card)
             
-            return "cards created :)", 201
+            return Response(status=201)
         else:
-            return Response("Deck already has cards, try deleting the deck first", status=415)
+            return Response(status=415)
 
 
 class DeckCollection(Resource):
@@ -179,7 +179,7 @@ class DeckCollection(Resource):
         print("trying to create new deck...")
 
         if (game.deck_id != None):
-            return "Game already has a deck. Don't create a new one :(", 400
+            return Response(status=400)
         newDeck = Deck(
             game_id = game.id
         )
@@ -198,25 +198,24 @@ class GameItem(Resource):
     Inputs are given through the resource URL
     """
     def get(self, game):
-        return game.serialize()
+        return Response(str(game.serialize()), status=200)
 
     def patch(self, game):
         print("Changing the name of the game {}".format(game.id))
         game_name = request.json["game_name"]
         old_name = Game.query.get(game.id).game_name
-
         Game.query.get(game.id).game_name = game_name
         db.session.commit()
 
         print(f"Game name {old_name} changed to {game_name}.")
-        return Response(f"Game name {old_name} changed to {game_name}.", 200)
+        return Response(status=200)
         
 
     def delete(self, game):
         print("deleting game: " + game.game_name)
         db.session.delete(game)
         db.session.commit()
-        return "Game removed.", 200
+        return Response(status=200)
 
 class GameCollection(Resource):
     """
@@ -232,11 +231,11 @@ class GameCollection(Resource):
                 "game_name": Game.query.get(i+1).game_name
             }
             game_list.append(game)
-        return game_list
+        return Response(str(game_list), status=200)
 
     def post(game):
         if not request.json:
-            return Response("not json", status=415)
+            return Response(status=415)
         try:
             print("trying to create new game")
             newGame = Game(
@@ -251,7 +250,7 @@ class GameCollection(Resource):
             
             return Response(headers={'Location': game_url}, status=201)
         except (KeyError, ValidationError, IntegrityError):
-            return "something borke", 400
+            return Response(status=400)
         #except ValidationError as e:
         #    raise BadRequest(description=str(e))
         #except IntegrityError:
@@ -266,6 +265,7 @@ class CardHandler(Resource):
     def put(self, deck, card):
         deck.cards[card.id].is_still_in_deck = not deck.cards[card.id].is_still_in_deck
         db.session.commit()
+        Response(status=200)
 
 
 #Converters
