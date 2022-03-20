@@ -50,4 +50,6 @@ Tests and coverage report can be run with the command: "pytest --cov-report term
 * Get a specific card in a deck: Get request to the url ~api/decks/**enter-your-deck-id-here**/cards/**enter-your-card-id-here**/
 
 * Toggle cards *is_still_in_deck* parameter: PUT request to the url ~api/decks/**enter-your-deck-id-here**/cards/**enter-your-card-id-here**/
-
+* Change name of a game: PATCH request to the url ~api/games/**enter-your-game-id**/ that contains JSON content: {"game_name":"**enter-new-game-name-here**"}
+* Delete a game: DELETE request to the url ~api/games/**enter-your-game-id**/
+* Delete a deck: DELETE request to the url ~api/games/**enter-your-game-id**/decks/**enter-your-deck-id**/
