@@ -1,3 +1,4 @@
+from re import I
 from xml.dom import ValidationErr
 from flask import Flask, request, Response, request
 from flask_sqlalchemy import SQLAlchemy
@@ -167,10 +168,10 @@ class DeckCollection(Resource):
         print("printing game")
         print(game)
         deck_list = []
-        for i in range(len(Deck.query.all())):
+        for i in Deck.query.all():
             deck = {
-                "id": Deck.query.get(i+1).id,
-                "game_id": Deck.query.get(i+1).game_id
+                "id": i.id,
+                "game_id": i.game_id
             }
             deck_list.append(deck)
         return deck_list
@@ -225,10 +226,11 @@ class GameCollection(Resource):
     """
     def get(self):
         game_list = []
-        for i in range(len(Game.query.all())):
+
+        for i in Game.query.all():
             game = {
-                "id": Game.query.get(i+1).id,
-                "game_name": Game.query.get(i+1).game_name
+                "id": i.id,
+                "game_name": i.game_name
             }
             game_list.append(game)
         return Response(str(game_list), status=200)
