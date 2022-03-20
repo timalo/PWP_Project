@@ -42,4 +42,4 @@ Tests and coverage report can be run with the command: "pytest --cov-report term
 
 * First create a game by sending a POST request to the url ~api/games/ that contains JSON content: {"game_name":"<enter-your-game-name-here>"}
   
-* Create a deck for a game by sending a POST request to the url ~api/games/enter-your-game-id/decks/ that contains empty JSON: {}
+* Create a deck for a game by sending a POST request to the url ~api/games/*enter-your-game-id*/decks/ that contains empty JSON: {}
