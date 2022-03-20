@@ -13,6 +13,7 @@ from werkzeug.exceptions import NotFound, Conflict, BadRequest, UnsupportedMedia
 
 import os
 import random
+import json
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///test.db"
@@ -111,7 +112,7 @@ class DeckItem(Resource):
     Delete function removes the deck. 
     """
     def get(self, game, deck):
-        return Response(str(deck.serialize()), status=200)
+        return Response(json.dumps(deck.serialize()), status=200)
 
     def delete(self, deck, game):
         db.session.delete(deck)
@@ -126,7 +127,7 @@ class CardItem(Resource):
     """
     def get(self, card, deck):
         print(deck)
-        return Response(str(deck.cards[card.id].serialize()), status=200)
+        return Response(json.dumps(deck.cards[card.id].serialize()), status=200)
 
     def put(self, deck, card):
         deck.cards[card.id].is_still_in_deck = not deck.cards[card.id].is_still_in_deck
@@ -205,7 +206,7 @@ class GameItem(Resource):
     Inputs are given through the resource URL
     """
     def get(self, game):
-        return Response(str(game.serialize()), status=200)
+        return Response(json.dumps(game.serialize()), status=200)
 
     def patch(self, game):
         print("Changing the name of the game {}".format(game.id))
@@ -239,7 +240,7 @@ class GameCollection(Resource):
                 "game_name": i.game_name
             }
             game_list.append(game)
-        return Response(str(game_list), status=200)
+        return Response(json.dumps(game_list), status=200)
 
     def post(game):
         if not request.json:
@@ -256,7 +257,7 @@ class GameCollection(Resource):
             game_url = api.url_for(GameItem, game=newGame)
             print("game url: " + game_url)
             
-            return Response(headers={'Location': game_url}, status=201)
+            return Response(headers={"Location": game_url}, status=201)
         except (KeyError, ValidationError, IntegrityError):
             return Response(status=400)
         #except ValidationError as e:

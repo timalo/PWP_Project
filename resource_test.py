@@ -535,12 +535,33 @@ class TestCardItem(object):
 
     def test_put(self, client):
         """
-        PUT is not implemented, should return 405
+        tests PUT method which should toggle "drawn" status for a single card
         """
 
-        resp = client.put(self.RESOURCE_URL, json="")
-        assert resp.status_code == 405
+        #1. check that the boolean "is_still_in_deck" is false
+        resp = client.get("/api/decks/1/cards/1/")
+        assert resp.status_code == 200
+        body = json.loads(resp.data)
+        assert body["is_still_in_deck"] == True
 
+        #2. toggle the value and check that the boolean is now false
+        resp = client.put(self.RESOURCE_URL, json="")
+        assert resp.status_code == 200
+        resp = client.get("/api/decks/1/cards/1/")
+        assert resp.status_code == 200
+        body = json.loads(resp.data)
+        assert body["is_still_in_deck"] == False
+
+        #3. toggle it again and check that it changes back to true
+        resp = client.put(self.RESOURCE_URL, json="")
+        assert resp.status_code == 200
+        resp = client.get("/api/decks/1/cards/1/")
+        assert resp.status_code == 200
+        body = json.loads(resp.data)
+        assert body["is_still_in_deck"] == True
+
+
+@pytest.mark.skip(reason="Card handler has been removed from the API")
 class TestCardHandler(object):
     """
     This class implements test for each HTTP method in card handler resource
