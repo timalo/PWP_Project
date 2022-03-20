@@ -128,6 +128,12 @@ class CardItem(Resource):
         print(deck)
         return Response(str(deck.cards[card.id].serialize()), status=200)
 
+    def put(self, deck, card):
+        deck.cards[card.id].is_still_in_deck = not deck.cards[card.id].is_still_in_deck
+        db.session.commit()
+        Response(status=200)
+
+
 class CardCollection(Resource):
     """
     Resource for handling the creation of the cards in the deck.
@@ -258,18 +264,6 @@ class GameCollection(Resource):
         #except IntegrityError:
         #    return "Something wrong with adding the game to the database.", 400
 
-    
-class CardHandler(Resource):
-    """
-    CardHandler resource that is responsible for performing actions on the deck.
-    Put function picks a given card from the deck and marks it as drawn/discarded
-    """
-    def put(self, deck, card):
-        deck.cards[card.id].is_still_in_deck = not deck.cards[card.id].is_still_in_deck
-        db.session.commit()
-        Response(status=200)
-
-
 #Converters
 class DeckConverter(BaseConverter):
     #Converter for getting the url for a deck from database object
@@ -305,14 +299,14 @@ class GameConverter(BaseConverter):
 
 
 app.url_map.converters["game"] = GameConverter
+app.url_map.converters["card"] = CardConverter
+app.url_map.converters["deck"] = DeckConverter
+
 api.add_resource(GameCollection, "/api/games/")
 api.add_resource(GameItem, "/api/games/<game:game>/")
 
-app.url_map.converters["deck"] = DeckConverter
 api.add_resource(DeckCollection, "/api/games/<game:game>/decks/")
 api.add_resource(DeckItem, "/api/games/<game:game>/decks/<deck:deck>/")
 
-app.url_map.converters["card"] = CardConverter
-api.add_resource(CardHandler, "/api/decks/<deck:deck>/cards/<card:card>/handler/")
 api.add_resource(CardCollection, "/api/decks/<deck:deck>/cards/")
 api.add_resource(CardItem, "/api/decks/<deck:deck>/cards/<card:card>/")
