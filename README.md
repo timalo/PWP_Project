@@ -25,3 +25,17 @@ Tests are located in a single file: "resource_test.py"
 
 Tests and coverage report can be run with the command: "pytest --cov-report term-missing --cov=app"
 
+## Guide
+
+1. First create new empty database by accessing Python terminal and entering the following commands
+
+from app import db
+db.create_all()
+
+(alternatively run the db_populate.py file)
+
+2. Now start the server by typing
+
+flask run
+
+3. API tester plugin is recommended for ease of use (e.g. Talend API Tester)
