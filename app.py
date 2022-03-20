@@ -1,19 +1,17 @@
-from re import I
-from xml.dom import ValidationErr
-from flask import Flask, request, Response, request
+
+import json
+from flask import Flask, request, Response
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 from jsonschema import ValidationError
 from sqlalchemy.engine import Engine
 from sqlalchemy import event
 from flask_restful import Api, Resource
-from werkzeug.exceptions import NotFound
 from werkzeug.routing import BaseConverter
-from werkzeug.exceptions import NotFound, Conflict, BadRequest, UnsupportedMediaType
+from werkzeug.exceptions import NotFound
 
-import os
-import random
-import json
+
+
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///test.db"
@@ -21,11 +19,6 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 api = Api(app)
 
-delete_player = False
-delete_game = True
-delete_deck = False
-delete_card = False
-delete_playergamepair = False
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -186,15 +179,15 @@ class DeckCollection(Resource):
     def post(deck, game):
         print("trying to create new deck...")
 
-        if (game.deck_id != None):
+        if (game.deck_id is not None):
             return Response(status=400)
-        newDeck = Deck(
+        new_deck = Deck(
             game_id = game.id
         )
-        db.session.add(newDeck)
+        db.session.add(new_deck)
         db.session.commit()
         print("deck in DB")
-        deck_url = api.url_for(DeckItem, deck=newDeck, game=game)
+        deck_url = api.url_for(DeckItem, deck=new_deck, game=game)
         print("deck url is: " + deck_url)
         
         return Response(headers={'Location': deck_url}, status=201)
@@ -268,8 +261,8 @@ class GameCollection(Resource):
 #Converters
 class DeckConverter(BaseConverter):
     #Converter for getting the url for a deck from database object
-    def to_python(self, id):
-        db_deck = Deck.query.filter_by(id=id).first()
+    def to_python(self, value):
+        db_deck = Deck.query.filter_by(id=value).first()
         if db_deck is None:
             raise NotFound
         return db_deck
@@ -278,8 +271,8 @@ class DeckConverter(BaseConverter):
         return str(db_deck.id)
 
 class CardConverter(BaseConverter):
-    def to_python(self, id):
-        db_card = Card.query.filter_by(id=id).first()
+    def to_python(self, value):
+        db_card = Card.query.filter_by(id=value).first()
         if db_card is None:
             raise NotFound
         return db_card
@@ -288,8 +281,8 @@ class CardConverter(BaseConverter):
         return str(db_card.order_id)
 
 class GameConverter(BaseConverter):
-    def to_python(self, id):
-        db_game = Game.query.filter_by(id=id).first()
+    def to_python(self, value):
+        db_game = Game.query.filter_by(id=value).first()
         if db_game is None:
             raise NotFound
         return db_game
