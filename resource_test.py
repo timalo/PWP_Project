@@ -198,6 +198,23 @@ class TestGameCollection(object):
         resp = client.delete(self.RESOURCE_URL)
         assert resp.status_code == 405
 
+    def test_patch(self, client):
+        """
+        PATCH method is used to change the game_name value of game resource
+        """
+        resp = client.get(self.RESOURCE_URL)
+        body = json.loads(resp.data)
+        assert body[0]["game_name"] == "testGame1"
+
+        resp = client.patch(f"{self.RESOURCE_URL}1/", json=_get_game_json(2))
+        assert resp.status_code == 200
+
+        resp = client.get(self.RESOURCE_URL)
+        body = json.loads(resp.data)
+        assert body[0]["game_name"] == "extra-game-2"
+
+
+
 class TestGameItem(object):
     """
     This class implements tests for each HTTP method in game item
