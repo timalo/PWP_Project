@@ -200,6 +200,18 @@ class GameItem(Resource):
     def get(self, game):
         return game.serialize()
 
+    def patch(self, game):
+        print("Changing the name of the game {}".format(game.id))
+        game_name = request.json["game_name"]
+        old_name = Game.query.get(game.id).game_name
+
+        Game.query.get(game.id).game_name = game_name
+        db.session.commit()
+
+        print(f"Game name {old_name} changed to {game_name}.")
+        return Response(f"Game name {old_name} changed to {game_name}.", 200)
+        
+
     def delete(self, game):
         print("deleting game: " + game.game_name)
         db.session.delete(game)
