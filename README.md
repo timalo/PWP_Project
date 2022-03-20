@@ -29,17 +29,17 @@ Tests and coverage report can be run with the command: "pytest --cov-report term
 
 1. First create new empty database by accessing Python terminal and entering the following commands
 
-* from app import db
-* db.create_all()
+> from app import db
+> db.create_all()
 
-* (alternatively run the db_populate.py file)
+(alternatively run the db_populate.py file)
 
 2. Now start the server by typing
 
-* flask run
+> flask run
 
 3. API tester plugin is recommended for ease of use (e.g. Talend API Tester)
 
-* First create a game by sending a POST request to the url ~api/games/ that contains JSON content: {"game_name":"<enter-your-game-name-here>"}
+* Create a game by sending a POST request to the url ~api/games/ that contains JSON content: {"game_name":"enter-your-game-name-here"}
   
 * Create a deck for a game by sending a POST request to the url ~api/games/*enter-your-game-id*/decks/ that contains empty JSON: {}
