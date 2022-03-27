@@ -9,13 +9,19 @@ from sqlalchemy import event
 from flask_restful import Api, Resource
 from werkzeug.routing import BaseConverter
 from werkzeug.exceptions import NotFound
-
+from flasgger import Swagger, swag_from
 
 
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///test.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SWAGGER"] = {
+    "title": "Partygames API",
+    "openapi": "3.0.3",
+    "uiversion": 3,
+}
+swagger = Swagger(app, template_file="doc/partygames.yml")
 db = SQLAlchemy(app)
 api = Api(app)
 

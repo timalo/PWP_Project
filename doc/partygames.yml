@@ -1,0 +1,297 @@
+---
+openapi: 3.0.3
+servers:
+- url: /api
+components:
+  parameters:
+    game_id:
+      description: Selected game's unique id
+      in: path
+      name: game_id
+      required: true
+      schema:
+        type: number
+    deck_id:
+      description: Selected deck's unique ud
+      in: path
+      name: deck_id
+      required: true
+      schema:
+        type: number
+    card_id:
+      description: Selected card's unique ud
+      in: path
+      name: card_id
+      required: true
+      schema:
+        type: number
+  schemas:
+    Games:
+      properties:
+        game_name:
+          description: Name of the game
+          type: string
+        id:
+          description: Games's unique id
+          type: number
+      required:
+      - game_name
+        id
+      type: object
+    Decks:
+      properties:
+        id:
+          description: ID of the deck
+          type: number
+        game_id:
+          description: Games's unique id
+          type: number
+      required:
+      - id
+        game_id
+      type: object
+    Cards:
+      properties:
+        deck_id:
+          description: ID of the deck the card belongs to
+          type: number
+        value:
+          description: Cards value
+          type: string
+        is_still_in_deck:
+          description: Is the card still in the deck
+          type: boolean
+      required:
+      - deck_id
+        value
+        is_still_in_deck
+      type: object
+  securitySchemes:
+    sensorhubKey:
+      type: apiKey
+      name: Partygames-Api-Key
+      in: header
+info:
+  title: Partygames API
+  version: 0.0.1
+  description: |
+    This is an API created for the Programmable Web Project course.
+    It stores data about games, decks and cards
+  termsOfService: http://totally.not.placehold.er/
+  contact:
+    url: http://totally.not.placehold.er/
+    email: pwp-course@lists.oulu.fi
+    name: PWP Staff List
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+paths:
+  /games/:
+    get:
+      description: Get the list of managed games
+      responses:
+        '200':
+          description: List of games
+          content:
+            application/json:
+              example:
+              - id: 1
+                game_name: testGame1
+              - id: 2 
+                game_name: testGame2
+    post:
+      description: Create a new game
+      requestBody:
+        description: JSON document that contains basic data for a new game
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Games'
+            example:
+              game_name: new-game1
+      responses:
+        '201':
+          description: The game was created successfully
+          headers:
+            Location: 
+              description: URI of the new game
+              schema: 
+                type: string
+        '400':
+          description: The request body was not valid
+        '409':
+          description: A game with the same name already exists
+        '415':
+          description: Wrong media type was used
+  /games/{game_id}/:
+    parameters:
+    - $ref: '#/components/parameters/game_id'
+    get:
+      description: Get details of one game
+      responses:
+        '200':
+          description: Data of a single game
+          content:
+            application/json:
+              examples:
+                game:
+                  description: A sample game
+                  value:
+                    id: 1
+                    game_name: test-game-1
+        '404':
+          description: The game was not found
+    delete:
+     description: Delete the selected game
+     responses:
+       '204':
+         description: The game was successfully deleted
+       '404':
+         description: The game was not found
+    patch:
+      description: Update game's name
+      requestBody:
+        description: JSON document that contains new name for the game
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Game'
+            example:
+              game_name: new-gameName-1
+      responses:
+        '204':
+          description: The game's attributes were updated successfully
+        '400':
+          description: The request body was not valid
+        '404':
+          description: The game was not found
+        '415':
+          description: Wrong media type was used
+  
+  /games/{game_id}/decks/:
+    get:
+      description: Get the list of managed decks
+      responses:
+        '200':
+          description: List of decks
+          content:
+            application/json:
+              example:
+              - id: 1
+                game_id: 1
+              - id: 2 
+                game_id: 2
+    post:
+      description: Create a new deck
+      requestBody:
+        description: JSON document that contains basic data for a new deck
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Decks'
+
+      responses:
+        '201':
+          description: The deck was created successfully
+          headers:
+            Location: 
+              description: URI of the new deck
+              schema: 
+                type: string
+        '400':
+          description: The request body was not valid
+        '409':
+          description: A game with the same name already exists
+        '415':
+          description: Wrong media type was used
+  /games/{game_id}/decks/{deck_id}/:
+    parameters:
+    - $ref: '#/components/parameters/deck_id'
+    get:
+      description: Get details of one deck
+      responses:
+        '200':
+          description: Data of a single deck
+          content:
+            application/json:
+              examples:
+                deck-with-cards:
+                  description: A deck that has been populated
+                  value:
+                    id: 1
+                    game_id: 1
+                    cards: [["AS", 0, true], ["2S", 1, true], ["KH", 51, true]]
+                deck-without-cards:
+                  description: An empty deck
+                  value:
+                    id: 1
+                    game_id: 1
+                    cards: []
+
+
+        '404':
+          description: The deck was not found
+    delete:
+     description: Delete the selected deck
+     responses:
+       '204':
+         description: The deck was successfully deleted
+       '404':
+         description: The deck was not found
+  /decks/{deck_id}/cards/:
+    post:
+      description: Populates the deck with a new set of cards
+      requestBody:
+        description: JSON document that contains basic data for a card set
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Cards'
+
+      responses:
+        '201':
+          description: The cards were created successfully
+        '400':
+          description: The request body was not valid
+        '409':
+          description: A game with the same name already exists
+        '415':
+          description: Wrong media type was used
+  /decks/{deck_id}/cards/{cards_id}/:
+    parameters:
+    - $ref: '#/components/parameters/card_id'
+    get:
+      description: Get details of one card
+      responses:
+        '200':
+          description: Data of a single card
+          content:
+            application/json:
+              examples:
+                card:
+                  description: A single card
+                  value:
+                    deck_id: 1
+                    value: "2S"
+                    is_still_in_deck: true
+
+
+        '404':
+          description: The card was not found
+    put:
+      description: Used for toggling card's "is_still_in_deck" value
+      requestBody:
+        description: JSON document that contains data of the card
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Cards'
+      responses:
+        '204':
+          description: The card's attributes were updated successfully
+        '400':
+          description: The request body was not valid
+        '404':
+          description: The card was not found
+        '415':
+          description: Wrong media type was used
